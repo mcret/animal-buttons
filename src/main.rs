@@ -20,7 +20,7 @@ fn main() -> ! {
     //set up buttons
     let (_stream, stream_handle) = OutputStream::try_default().expect("Unable to get default output stream");
     let aud_path = Path::new("audio");
-    let gpio = Gpio::new()?;
+    let gpio = Gpio::new().expect("Unable to create new gpio");
     for dir in 1..10
     {
         let sink = Sink::try_new(&stream_handle).expect(&*format!("Unable to sink for pin {}", dir));
@@ -33,7 +33,7 @@ fn main() -> ! {
         let reader = BufReader::new(File::open(file).expect(&*format!("Unable to open file {:?}", file)));
         let source = Decoder::new(reader).expect(&*format!("Unable to create encoder for {:?}", file));
 
-        let mut pin = gpio.get(dir)?.into_input_pullup();
+        let mut pin = gpio.get(dir).expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
         pin.set_async_interrupt(Trigger::FallingEdge, || foo(sink, source, dir))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
     }
