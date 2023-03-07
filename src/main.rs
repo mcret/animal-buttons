@@ -25,16 +25,14 @@ fn main() -> ! {
     {
         let sink = Sink::try_new(&stream_handle).expect(&*format!("Unable to sink for pin {}", dir));
         let path_buf = aud_path.join(dir.to_string());
-        let file = fs::read_dir(path_buf)
+        let file = fs::read_dir(path_buf.clone())
             .expect(&*format!("Unable to read directory {:?}", path_buf))
             .next()
             .expect(&*format!("Unable to find file in {:?}", path_buf))
             .expect("I don't know what goes here");
-        let reader = BufReader::new(File::open(file).expect(&*format!("Unable to open file {:?}", file)));
-        let source = Decoder::new(reader).expect(&*format!("Unable to create encoder for {:?}", file));
 
         let mut pin = gpio.get(dir).expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
-        pin.set_async_interrupt(Trigger::FallingEdge, || foo(sink, source, dir))
+        pin.set_async_interrupt(Trigger::FallingEdge, move |_| foo(&sink, file, dir))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
     }
 
@@ -43,8 +41,11 @@ fn main() -> ! {
     }
 }
 
-fn foo(sink: Sink, source: Decoder<BufReader<File>>, dir: u8)
+fn foo(sink: &Sink, file: DirEntry, dir: u8)
 {
+    let reader = BufReader::new(File::open(file.path()).expect(&*format!("Unable to open file {:?}", file)));
+    let source = Decoder::new(reader).expect(&*format!("Unable to create encoder for {:?}", file));
+
     info!("Callback for button {}", dir);
-    sink.append(source);
+    (*sink).append(source);
 }
