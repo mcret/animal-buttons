@@ -32,7 +32,7 @@ fn main() -> ! {
             .expect("I don't know what goes here");
 
         let mut pin = gpio.get(dir).expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
-        pin.set_async_interrupt(Trigger::FallingEdge, move |_| foo(&sink, file, dir))
+        pin.set_async_interrupt(Trigger::FallingEdge, move |_| foo(&sink, file.clone(), dir))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
     }
 
@@ -43,8 +43,8 @@ fn main() -> ! {
 
 fn foo(sink: &Sink, file: DirEntry, dir: u8)
 {
-    let reader = BufReader::new(File::open(file.path()).expect(&*format!("Unable to open file {:?}", file)));
-    let source = Decoder::new(reader).expect(&*format!("Unable to create encoder for {:?}", file));
+    let reader = BufReader::new(File::open(file.path()).expect(&*format!("Unable to open file {:?}", dir)));
+    let source = Decoder::new(reader).expect(&*format!("Unable to create encoder for {:?}", dir));
 
     info!("Callback for button {}", dir);
     (*sink).append(source);
