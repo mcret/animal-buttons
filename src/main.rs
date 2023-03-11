@@ -1,7 +1,7 @@
 use rppal::gpio::{Gpio, InputPin, Trigger};
 
 use std::{fs};
-use std::fs::{DirEntry, File};
+use std::fs::{File};
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -86,7 +86,7 @@ impl Debouncer
         let source = Decoder::new(reader)
             .expect(&*format!("Unable to create encoder for {:?}", self.dir));
 
-        info!("Callback for button {}", dir);
+        info!("Callback for button {}", self.dir);
         self.sink.append(source);
     }
 }
