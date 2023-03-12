@@ -24,10 +24,10 @@ fn main() -> ! {
     let aud_path = Path::new("audio");
     let gpio = Gpio::new().expect("Unable to create new gpio");
     let mut pins: Vec<InputPin> = Vec::new();
-    for dir in 4..=4
+    let sink = Sink::try_new(&stream_handle)
+        .expect(&*format!("Unable to sink for pin {}", dir));
+    for dir in 1..=10
     {
-        let sink = Sink::try_new(&stream_handle)
-            .expect(&*format!("Unable to sink for pin {}", dir));
         let path_buf = aud_path.join(dir.to_string());
         let file = fs::read_dir(path_buf.clone())
             .expect(&*format!("Unable to read directory {:?}", path_buf))
@@ -40,8 +40,8 @@ fn main() -> ! {
 
         let mut pin = gpio.get(dir)
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
-        let mut debouncer = Debouncer::new(sink, file.path(), dir);
-        pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer.foo())
+        let mut debouncer = Debouncer::new(file.path(), dir);
+        pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer.foo(&sink))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
     }
@@ -55,26 +55,24 @@ struct Debouncer
 {
     last_trigger: Instant,
     min_duration: Duration,
-    sink: Sink,
     file: PathBuf,
     dir: u8,
 }
 
 impl Debouncer
 {
-    fn new(sink: Sink, file: PathBuf, dir: u8) -> Debouncer
+    fn new(file: PathBuf, dir: u8) -> Debouncer
     {
         Debouncer
         {
             last_trigger: Instant::now(),
             min_duration: Duration::from_secs(1),
-            sink,
             file,
             dir,
         }
     }
 
-    fn foo(&mut self)
+    fn foo(&mut self, sink: &Sink)
     {
         if self.last_trigger.elapsed() < self.min_duration
         {
@@ -87,6 +85,6 @@ impl Debouncer
             .expect(&*format!("Unable to create encoder for {:?}", self.dir));
 
         info!("Callback for button {}", self.dir);
-        self.sink.append(source);
+        sink.append(source);
     }
 }
