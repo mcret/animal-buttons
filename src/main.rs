@@ -11,7 +11,7 @@ use simple_logger::SimpleLogger;
 
 use rodio::{Decoder, OutputStream, Sink};
 
-fn main() -> ! {
+fn main() {
     log::set_boxed_logger(Box::new(SimpleLogger::default()))
         .map(|()| log::set_max_level(LevelFilter::Info))
         .expect("Unable to establish logger");
