@@ -25,7 +25,7 @@ fn main() -> ! {
     let gpio = Gpio::new().expect("Unable to create new gpio");
     let mut pins: Vec<InputPin> = Vec::new();
     let sink = Sink::try_new(&stream_handle)
-        .expect(&*format!("Unable to sink for pin {}", dir));
+        .expect("Unable to create sink.");
     for dir in 1..=10
     {
         let path_buf = aud_path.join(dir.to_string());
