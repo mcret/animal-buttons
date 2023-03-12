@@ -1,6 +1,6 @@
 use rppal::gpio::{Gpio, InputPin, Trigger};
 
-use std::{fs};
+use std::{fs, io};
 use std::fs::{File};
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
@@ -41,14 +41,18 @@ fn main() -> ! {
         let mut pin = gpio.get(dir)
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
         let mut debouncer = Debouncer::new(file.path(), dir);
-        pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer.foo(&sink))
+        pin.set_async_interrupt(Trigger::RisingEdge, |_| debouncer.foo(&sink))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
     }
 
-    loop {
+    println!("waiting");
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input");
 
-    }
+    let pins = 1;
 }
 
 struct Debouncer
