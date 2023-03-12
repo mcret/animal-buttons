@@ -41,7 +41,7 @@ fn main() {
         let mut pin = gpio.get(dir)
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
         let mut debouncer = Debouncer::new(file.path(), dir);
-        pin.set_async_interrupt(Trigger::RisingEdge, |_| debouncer.foo(&sink))
+        pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer.foo(&sink))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
     }
