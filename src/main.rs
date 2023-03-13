@@ -89,6 +89,9 @@ impl Debouncer
             .expect(&*format!("Unable to create encoder for {:?}", self.dir));
 
         info!("Callback for button {}:\t{:?}", self.dir, self.file.as_path());
-        output_stream_handle.play_raw(source).expect(&*format!("unable to play {:?}", &self.file));
+
+        let sink = Sink::try_new(output_stream_handle).expect("unable to make stream.");
+        sink.append(source);
+        sink.detach();
     }
 }
