@@ -36,6 +36,8 @@ fn main() -> ! {
             .expect(&*format!("Unable to find file in {:?}", path_buf))
             .expect("I don't know what goes here");
 
+        let sink = Sink::try_new(output_stream_handle).expect("unable to make stream.");
+
         info!("configuring in {}", dir);
         info!("with file {:?}", file.file_name());
 
@@ -45,7 +47,7 @@ fn main() -> ! {
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
         let mut debouncer = Debouncer::new(file.path(), number);
         pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer
-            .foo(&stream_handle))
+            .foo(sink))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
     }
@@ -76,7 +78,7 @@ impl Debouncer
         }
     }
 
-    fn foo(&mut self, output_stream_handle: &OutputStreamHandle)
+    fn foo(&mut self, sink: Sink)
     {
         if self.last_trigger.elapsed() < self.min_duration
         {
@@ -90,7 +92,6 @@ impl Debouncer
 
         info!("Callback for button {}:\t{:?}", self.dir, self.file.as_path());
 
-        let sink = Sink::try_new(output_stream_handle).expect("unable to make stream.");
         sink.append(source);
         sink.detach();
     }
