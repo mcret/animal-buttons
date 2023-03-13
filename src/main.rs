@@ -16,8 +16,7 @@ fn main() -> ! {
         .map(|()| log::set_max_level(LevelFilter::Info))
         .expect("Unable to establish logger");
 
-    let mut args: Vec<u8> = env::args().collect().iter()
-        .map(|&it| it.parse::<u8>().expect("parse error")).collect();
+    let mut args: Vec<String> = env::args().collect();
     args.remove(0);
 
     info!("Hello, pets!");
@@ -42,9 +41,11 @@ fn main() -> ! {
         info!("configuring in {}", dir);
         info!("with file {:?}", file.file_name());
 
-        let mut pin = gpio.get(dir)
+        let number = dir.parse::<u8>().expect("unable to parse arg");
+
+        let mut pin = gpio.get(number)
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
-        let mut debouncer = Debouncer::new(sink, file.path(), dir);
+        let mut debouncer = Debouncer::new(sink, file.path(), number);
         pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer.foo())
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
