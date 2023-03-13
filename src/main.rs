@@ -16,7 +16,8 @@ fn main() -> ! {
         .map(|()| log::set_max_level(LevelFilter::Info))
         .expect("Unable to establish logger");
 
-    let mut args: Vec<u8> = env::args().collect().into_bytes();
+    let mut args: Vec<u8> = env::args().collect().iter()
+        .map(|&it| it.parse::<u8>().expect("parse error")).collect();
     args.remove(0);
 
     info!("Hello, pets!");
