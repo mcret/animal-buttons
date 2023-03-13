@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 
-use rodio::{Decoder, OutputStream, Sink};
+use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
 
 fn main() -> ! {
     log::set_boxed_logger(Box::new(SimpleLogger::default()))
@@ -29,9 +29,6 @@ fn main() -> ! {
     let mut pins: Vec<InputPin> = Vec::new();
     for dir in args
     {
-        let sink = Sink::try_new(&stream_handle)
-            .expect(&*format!("Unable to sink for pin {}", dir));
-        sink.pause();
         let path_buf = aud_path.join(dir.to_string());
         let file = fs::read_dir(path_buf.clone())
             .expect(&*format!("Unable to read directory {:?}", path_buf))
@@ -46,8 +43,9 @@ fn main() -> ! {
 
         let mut pin = gpio.get(number)
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
-        let mut debouncer = Debouncer::new(sink, file.path(), number);
-        pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer.foo())
+        let mut debouncer = Debouncer::new(file.path(), number);
+        pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer
+            .foo(&stream_handle))
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
     }
@@ -61,26 +59,24 @@ struct Debouncer
 {
     last_trigger: Instant,
     min_duration: Duration,
-    sink: Sink,
     file: PathBuf,
     dir: u8,
 }
 
 impl Debouncer
 {
-    fn new(sink: Sink, file: PathBuf, dir: u8) -> Debouncer
+    fn new(file: PathBuf, dir: u8) -> Debouncer
     {
         Debouncer
         {
             last_trigger: Instant::now(),
             min_duration: Duration::from_secs(1),
-            sink,
             file,
             dir,
         }
     }
 
-    fn foo(&mut self)
+    fn foo(&mut self, output_stream_handle: &OutputStreamHandle)
     {
         if self.last_trigger.elapsed() < self.min_duration
         {
@@ -93,9 +89,6 @@ impl Debouncer
             .expect(&*format!("Unable to create encoder for {:?}", self.dir));
 
         info!("Callback for button {}:\t{:?}", self.dir, self.file.as_path());
-        self.sink.append(source);
-        self.sink.play();
-        self.sink.sleep_until_end();
-        self.sink.pause();
+        output_stream_handle.play_raw(source).expect(&*format!("unable to play {:?}", &self.file));
     }
 }
