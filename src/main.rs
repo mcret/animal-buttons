@@ -16,7 +16,7 @@ fn main() -> ! {
         .map(|()| log::set_max_level(LevelFilter::Info))
         .expect("Unable to establish logger");
 
-    let args: Vec<u8> = env::args().collect().remove(0);
+    let mut args: Vec<u8> = env::args().collect();
 
     info!("Hello, pets!");
 
@@ -26,7 +26,7 @@ fn main() -> ! {
     let aud_path = Path::new("audio");
     let gpio = Gpio::new().expect("Unable to create new gpio");
     let mut pins: Vec<InputPin> = Vec::new();
-    for dir in args
+    for dir in args.remove(0)
     {
         let sink = Sink::try_new(&stream_handle)
             .expect(&*format!("Unable to sink for pin {}", dir));
