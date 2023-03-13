@@ -45,9 +45,9 @@ fn main() -> ! {
 
         let mut pin = gpio.get(number)
             .expect(&*format!("unable to get pin {}", dir)).into_input_pullup();
-        let mut debouncer = Debouncer::new(file.path(), number);
+        let mut debouncer = Debouncer::new(sink, file.path(), number);
         pin.set_async_interrupt(Trigger::RisingEdge, move |_| debouncer
-            .foo(sink))
+            .foo())
             .expect(&*format!("Unable to set interrupt on pin {}", dir));
         pins.push(pin);
     }
@@ -61,24 +61,26 @@ struct Debouncer
 {
     last_trigger: Instant,
     min_duration: Duration,
+    sink: Sink,
     file: PathBuf,
     dir: u8,
 }
 
 impl Debouncer
 {
-    fn new(file: PathBuf, dir: u8) -> Debouncer
+    fn new(sink: Sink, file: PathBuf, dir: u8) -> Debouncer
     {
         Debouncer
         {
             last_trigger: Instant::now(),
             min_duration: Duration::from_secs(1),
+            sink,
             file,
             dir,
         }
     }
 
-    fn foo(&mut self, sink: Sink)
+    fn foo(&mut self)
     {
         if self.last_trigger.elapsed() < self.min_duration
         {
@@ -92,7 +94,6 @@ impl Debouncer
 
         info!("Callback for button {}:\t{:?}", self.dir, self.file.as_path());
 
-        sink.append(source);
-        sink.detach();
+        self.sink.append(source);
     }
 }
