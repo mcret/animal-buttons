@@ -36,7 +36,7 @@ fn main() -> ! {
             .expect(&*format!("Unable to find file in {:?}", path_buf))
             .expect("I don't know what goes here");
 
-        let sink = Sink::try_new(output_stream_handle).expect("unable to make stream.");
+        let sink = Sink::try_new(&stream_handle).expect("unable to make stream.");
 
         info!("configuring in {}", dir);
         info!("with file {:?}", file.file_name());
