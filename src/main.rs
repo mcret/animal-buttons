@@ -31,6 +31,7 @@ fn main() -> ! {
     {
         let sink = Sink::try_new(&stream_handle)
             .expect(&*format!("Unable to sink for pin {}", dir));
+        sink.pause();
         let path_buf = aud_path.join(dir.to_string());
         let file = fs::read_dir(path_buf.clone())
             .expect(&*format!("Unable to read directory {:?}", path_buf))
@@ -93,5 +94,8 @@ impl Debouncer
 
         info!("Callback for button {}:\t{:?}", self.dir, self.file.as_path());
         self.sink.append(source);
+        self.sink.play();
+        self.sink.sleep_until_end();
+        self.sink.pause();
     }
 }
