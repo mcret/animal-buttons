@@ -1,6 +1,6 @@
 use rppal::gpio::{Gpio, InputPin, Trigger};
 
-use std::{fs};
+use std::{env, fs};
 use std::fs::{File};
 use std::io::{BufReader};
 use std::path::{Path, PathBuf};
@@ -16,6 +16,8 @@ fn main() -> ! {
         .map(|()| log::set_max_level(LevelFilter::Info))
         .expect("Unable to establish logger");
 
+    let args: Vec<u8> = env::args().collect().remove(0);
+
     info!("Hello, pets!");
 
     //set up buttons
@@ -24,7 +26,7 @@ fn main() -> ! {
     let aud_path = Path::new("audio");
     let gpio = Gpio::new().expect("Unable to create new gpio");
     let mut pins: Vec<InputPin> = Vec::new();
-    for dir in 4..=4
+    for dir in args
     {
         let sink = Sink::try_new(&stream_handle)
             .expect(&*format!("Unable to sink for pin {}", dir));
@@ -86,7 +88,7 @@ impl Debouncer
         let source = Decoder::new(reader)
             .expect(&*format!("Unable to create encoder for {:?}", self.dir));
 
-        info!("Callback for button {}", self.dir);
+        info!("Callback for button {}:\t{:?}", self.dir, self.file.as_path());
         self.sink.append(source);
     }
 }
